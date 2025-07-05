@@ -1,13 +1,33 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Star, ExternalLink, MessageCircle, Share2, Heart, Eye, User, ThumbsUp, ChevronDown, Filter, Calendar, Award } from 'lucide-react';
+import { Star, ExternalLink, MessageCircle, Share2, Heart, Eye, User, ThumbsUp, ChevronDown, Filter, Calendar, Award, X } from 'lucide-react';
+
+// Lucide React does not provide a Modal component. We'll use a simple custom modal.
+function Modal({ open, onClose, children }: { open: boolean, onClose: () => void, children: React.ReactNode }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full relative">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-700"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export default function ProjectDetail() {
   const [product, setProduct] = useState<any>(null);
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [newFeedback, setNewFeedback] = useState({
-    rating: 5,
+    rating: 0,
     comment: ''
   });
   const [filterRating, setFilterRating] = useState('all');
@@ -207,6 +227,7 @@ export default function ProjectDetail() {
                   Visit Product
                 </a>
                 <button 
+                  type="button"
                   onClick={() => setShowFeedbackForm(true)}
                   className="flex-1 bg-white text-gray-700 px-6 py-3 rounded-xl font-medium border border-gray-300 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                 >
@@ -289,9 +310,9 @@ export default function ProjectDetail() {
             </div>
           </div>
 
-          {/* Feedback Form */}
-          {showFeedbackForm && (
-            <div className="bg-gray-50 rounded-2xl p-6 mb-8">
+          {/* Feedback Form Modal */}
+          <Modal open={showFeedbackForm} onClose={() => setShowFeedbackForm(false)}>
+            <form onSubmit={handleFeedbackSubmit}>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Leave Your Feedback</h3>
               <div>
                 <div className="mb-4">
@@ -338,8 +359,8 @@ export default function ProjectDetail() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
+            </form>
+          </Modal>
 
           {/* Feedback List */}
           <div className="space-y-6">

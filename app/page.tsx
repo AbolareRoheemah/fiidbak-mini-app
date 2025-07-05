@@ -18,9 +18,10 @@ import {
   WalletDropdownDisconnect,
 } from "@coinbase/onchainkit/wallet";
 import React, { useState, useEffect } from 'react';
-import { Star, Plus, TrendingUp, Users, MessageCircle, ExternalLink, Heart, Eye } from 'lucide-react';
+import { Star, Plus, TrendingUp, Users, MessageCircle, User, Heart, Eye } from 'lucide-react';
 import ProductCard from "./components/ProductCard";
 import StatCard from "./components/StatCard";
+import { useRouter } from "next/navigation";
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const [products, setProducts] = useState<any[]>([]);
@@ -68,6 +69,7 @@ export default function App() {
       isActive: true
     }
   ];
+  const router = useRouter();
 
   useEffect(() => {
     setProducts(mockProducts);
@@ -111,12 +113,26 @@ export default function App() {
               </div>
               <h1 className="text-xl font-bold text-gray-900">Fiidbak</h1>
             </div>
+            <div className="flex flex-col md:flex-row gap-3">
+            <div className="flex items-center gap-3">
+              <ConnectWallet />
+            </div>
             <a
               href="/upload"
               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" /> Add Project
             </a>
+            <button 
+            onClick={() => router.push("/user_profile")}
+            className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 transition-colors"
+          >
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+              <User className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-sm font-medium text-gray-700">Profile</span>
+          </button>
+            </div>
           </div>
         </div>
       </div>

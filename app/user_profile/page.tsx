@@ -261,7 +261,7 @@ export default function UserProfile() {
             )}
 
             {/* Analytics Tab */}
-            {activeTab === 'analytics' && (
+            {/* {activeTab === 'analytics' && (
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-6">Analytics Overview</h3>
                 
@@ -322,7 +322,7 @@ export default function UserProfile() {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Reviews Tab */}
             {activeTab === 'reviews' && (
