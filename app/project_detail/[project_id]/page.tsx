@@ -1,6 +1,9 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Star, ExternalLink, MessageCircle, Share2, Heart, Eye, User, ThumbsUp, ChevronDown, Filter, Calendar, Award, X } from 'lucide-react';
+import { 
+  Star, ExternalLink, MessageCircle, Share2, Heart, Eye, User, ThumbsUp, 
+  ChevronDown, Filter, Calendar, Award, X, CheckCircle, AlertCircle 
+} from 'lucide-react';
 
 // Lucide React does not provide a Modal component. We'll use a simple custom modal.
 function Modal({ open, onClose, children }: { open: boolean, onClose: () => void, children: React.ReactNode }) {
@@ -26,6 +29,7 @@ export default function ProjectDetail() {
   const [product, setProduct] = useState<any>(null);
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [newFeedback, setNewFeedback] = useState({
     rating: 0,
     comment: ''
@@ -124,6 +128,11 @@ export default function ProjectDetail() {
     setFeedbacks([feedback, ...feedbacks]);
     setNewFeedback({ rating: 5, comment: '' });
     setShowFeedbackForm(false);
+    setShowSuccess(true);
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
   };
 
   const formatTimeAgo = (timestamp: number) => {
@@ -150,6 +159,37 @@ export default function ProjectDetail() {
   });
 
   if (!product) return <div>Loading...</div>;
+
+  if (showSuccess) {
+    return (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8 text-blue-600" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Feedback Submitted!</h3>
+          <p className="text-gray-600 mb-4">Thank you for your valuable feedback.</p>
+          
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6">
+            <div className="flex items-center justify-center gap-2 text-amber-800">
+              <AlertCircle className="w-5 h-5" />
+              <span className="font-medium">Pending Approval</span>
+            </div>
+            <p className="text-amber-600 text-sm mt-1">
+              You'll earn 0.0001 ETH once the product owner approves your feedback
+            </p>
+          </div>
+          
+          <button 
+            onClick={handleSuccessClose}
+            className="w-full bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+          >
+            Continue Exploring
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">

@@ -1,3 +1,6 @@
 [submodule "contracts/fiidbak/lib/forge-std"]
 	path = contracts/fiidbak/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "contracts/fiidbak/lib/openzeppelin-contracts"]
+	path = contracts/fiidbak/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
