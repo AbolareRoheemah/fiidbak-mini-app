@@ -6,6 +6,8 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { config } from './wagmi';
 import { ReactNode } from 'react';
+import { MiniKitProvider } from '@coinbase/onchainkit/minikit';
+import { baseSepolia } from 'wagmi/chains';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,6 +20,18 @@ const queryClient = new QueryClient({
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
+    <MiniKitProvider
+      apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+      chain={baseSepolia}
+      config={{
+        appearance: {
+          mode: "auto",
+          theme: "mini-app-theme",
+          name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
+          logo: process.env.NEXT_PUBLIC_ICON_URL,
+        },
+      }}
+    >
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider theme={lightTheme({
@@ -30,5 +44,6 @@ export function Providers({ children }: { children: ReactNode }) {
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
+    </MiniKitProvider>
   );
 }
