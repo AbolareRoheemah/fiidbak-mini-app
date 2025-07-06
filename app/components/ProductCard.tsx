@@ -56,14 +56,14 @@ export default function ProductCard({ product, getAverageRating, formatTimeAgo }
             <MessageCircle className="w-4 h-4 text-gray-400" />
             <span className="text-sm text-gray-600">{product.ratingCount} reviews</span>
           </div>
-          <div className="flex items-center gap-1">
+          {/* <div className="flex items-center gap-1">
             <Eye className="w-4 h-4 text-gray-400" />
             <span className="text-sm text-gray-600">{Math.floor(Math.random() * 100) + 50} views</span>
           </div>
           <div className="flex items-center gap-1 ml-auto">
             <Heart className="w-4 h-4 text-gray-400" />
             <span className="text-sm text-gray-600">{Math.floor(Math.random() * 20) + 5}</span>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

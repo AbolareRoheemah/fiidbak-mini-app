@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin-contracts/contracts/access/Ownable.sol";
+import "@openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
-contract ProductFeedback is Ownable, ReentrancyGuard {
+contract Fiidbak is Ownable, ReentrancyGuard {
     struct Product {
         uint256 id;
         address owner;
@@ -242,20 +242,27 @@ contract ProductFeedback is Ownable, ReentrancyGuard {
     function approveFeedback(uint256 _feedbackId) external nonReentrant {
         Feedback memory feedback = feedbacks[_feedbackId];
         require(feedback.id != 0, "Feedback does not exist");
-        require(products[feedback.productId].owner == msg.sender, "Not product owner");
+        require(
+            products[feedback.productId].owner == msg.sender,
+            "Not product owner"
+        );
         require(!feedbackApproved[_feedbackId], "Already approved");
         require(!feedbackRejected[_feedbackId], "Feedback was rejected");
-        
+
         feedbackApproved[_feedbackId] = true;
-        
+
         // Only reward if pool has sufficient funds
         if (rewardPool >= feedbackReward) {
             pendingRewards[feedback.reviewer] += feedbackReward;
             rewardPool -= feedbackReward;
             feedbackRewarded[_feedbackId] = true;
-            
+
             emit FeedbackRewarded(feedback.reviewer, feedbackReward);
-            emit FeedbackApproved(_feedbackId, feedback.reviewer, feedbackReward);
+            emit FeedbackApproved(
+                _feedbackId,
+                feedback.reviewer,
+                feedbackReward
+            );
         } else {
             // Approve but no reward due to insufficient pool
             emit FeedbackApproved(_feedbackId, feedback.reviewer, 0);
@@ -276,6 +283,10 @@ contract ProductFeedback is Ownable, ReentrancyGuard {
         require(!feedbackRejected[_feedbackId], "Already rejected");
 
         feedbackRejected[_feedbackId] = true;
+
+        // Remove rating from product totals
+        products[feedback.productId].totalRating -= feedback.rating;
+        products[feedback.productId].ratingCount--;
 
         emit FeedbackRejected(_feedbackId, feedback.reviewer, _reason);
     }
@@ -329,10 +340,77 @@ contract ProductFeedback is Ownable, ReentrancyGuard {
         return "pending";
     }
 
+    // Get reward pool status
+    function getRewardPoolStatus()
+        external
+        view
+        returns (
+            uint256 currentPool,
+            uint256 rewardPerFeedback,
+            uint256 remainingRewards
+        )
+    {
+        uint256 remaining = rewardPool > 0 ? rewardPool / feedbackReward : 0;
+        return (rewardPool, feedbackReward, remaining);
+    }
+
+    // Get user's pending rewards
+    function getPendingRewards(address _user) external view returns (uint256) {
+        return pendingRewards[_user];
+    }
+
+    // Emergency function to adjust reward if pool is low
+    function adjustRewardAmount(uint256 _newReward) external onlyOwner {
+        require(_newReward > 0, "Reward must be positive");
+        feedbackReward = _newReward;
+    }
+
+    // Get total number of products (for pagination)
+    function getTotalProductCount() external view returns (uint256) {
+        return nextProductId - 1;
+    }
+
+    // Get products with pagination
+    function getProductsPaginated(
+        uint256 _offset,
+        uint256 _limit
+    ) external view returns (Product[] memory) {
+        require(_limit > 0 && _limit <= 50, "Invalid limit");
+
+        uint256 totalProducts = nextProductId - 1;
+        if (_offset >= totalProducts) {
+            return new Product[](0);
+        }
+
+        uint256 end = _offset + _limit;
+        if (end > totalProducts) {
+            end = totalProducts;
+        }
+
+        uint256 activeCount = 0;
+        for (uint256 i = _offset + 1; i <= end; i++) {
+            if (products[i].isActive) {
+                activeCount++;
+            }
+        }
+
+        Product[] memory result = new Product[](activeCount);
+        uint256 index = 0;
+
+        for (uint256 i = _offset + 1; i <= end; i++) {
+            if (products[i].isActive) {
+                result[index] = products[i];
+                index++;
+            }
+        }
+
+        return result;
+    }
+
     function withdrawFees() external onlyOwner {
-        uint256 balance = address(this).balance;
-        require(balance > 0, "No funds to withdraw");
-        payable(owner()).transfer(balance);
+        uint256 fees = address(this).balance - rewardPool;
+        require(fees > 0, "No fees to withdraw");
+        payable(owner()).transfer(fees);
     }
 
     receive() external payable {}
