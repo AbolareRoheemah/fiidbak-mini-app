@@ -4,7 +4,6 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import Header from "./components/Header";
-import { useEffect } from "react";
 
 export const viewport: Viewport = {
   width: "device-width",
