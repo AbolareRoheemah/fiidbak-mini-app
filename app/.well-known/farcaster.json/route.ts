@@ -15,10 +15,10 @@ export async function GET() {
   const URL = process.env.NEXT_PUBLIC_URL;
 
   return Response.json({
-    accountAssociation: {
-      header: process.env.FARCASTER_HEADER,
-      payload: process.env.FARCASTER_PAYLOAD,
-      signature: process.env.FARCASTER_SIGNATURE,
+    "accountAssociation": {
+      "header": "eyJmaWQiOjEwMjQ1MjMsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhjMTkwMjRCQzREQmI4Mjk3RjA2NzRhMmZBNTlkMEI0NDZBY0FCMTNhIn0",
+      "payload": "eyJkb21haW4iOiJmaWlkYmFrLW1pbmktYXBwLnZlcmNlbC5hcHAifQ",
+      "signature": "MHg0MjZmZGRjMzdkNDk3NTgyZmE0YmUxOTMzZWI5ZmZmOGY2OWU2ZjU2Yjg0YzZmODM3MzVkMzA4YjVkMGZlYjg5NTc0NWExZWU1MmVhN2EzNDMzZTI0N2NjN2Y0MDA1MGU4MjVkNDlmOTViMGIzNTBiOWY0NTdmNzBmZDhjNjJiMjFj"
     },
     frame: withValidProperties({
       version: "1",
