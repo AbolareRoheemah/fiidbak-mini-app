@@ -6,6 +6,7 @@ import ProductCard from "./components/ProductCard";
 import StatCard from "./components/StatCard";
 import { useRouter } from "next/navigation";
 import { abi } from './utils/abi';
+import { sdk } from "@farcaster/miniapp-sdk";
 
 const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
 
@@ -58,7 +59,19 @@ export default function App() {
     abi: abi,
     functionName: 'getAllProducts',
   });
+  
+  useEffect(() => {
+    const initMiniApp = async () => {
+      try {
+        await sdk.actions.ready();
+        console.log('MiniApp initialized');
+      } catch (error) {
+        console.error('Failed to initialize MiniApp:', error);
+      }
+    };
 
+    initMiniApp();
+  }, []);
   // Process contract data
   useEffect(() => {
     if (contractProducts) {
