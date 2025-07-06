@@ -5,10 +5,7 @@ import {
   ExternalLink,
   MessageCircle,
   Share2,
-  Heart,
-  Eye,
   User,
-  ThumbsUp,
   Award,
   X,
   CheckCircle,
@@ -84,8 +81,7 @@ export default function ProjectDetail() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
 
-  const productIdRaw =
-    (params && params["project_id"]) || 1;
+  const productIdRaw = (params && params["project_id"]) || 1;
   const productId =
     typeof productIdRaw === "string"
       ? Number(productIdRaw)
@@ -130,7 +126,6 @@ export default function ProjectDetail() {
   });
 
   const handleShare = async () => {
-    console.log("got called")
     if (
       navigator.share &&
       product &&
@@ -145,7 +140,7 @@ export default function ProjectDetail() {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied to clipboard!');
+      toast.success("Link copied to clipboard!");
     }
   };
 
@@ -252,14 +247,13 @@ export default function ProjectDetail() {
         args: [BigInt(productId), newFeedback.comment.trim(), newFeedback.rating],
       });
       // If successful, error toast will be cleared by useEffect above
-    } catch (err: any) {
-      // This catches errors thrown by writeContract (e.g. user rejects, contract revert)
+    } catch (err) {
       let message = "Failed to submit feedback. Please try again.";
       if (err && typeof err === "object") {
-        if ("shortMessage" in err && typeof err.shortMessage === "string") {
-          message = err.shortMessage;
-        } else if ("message" in err && typeof err.message === "string") {
-          message = err.message;
+        if ("shortMessage" in err && typeof (err as { shortMessage?: string }).shortMessage === "string") {
+          message = (err as { shortMessage: string }).shortMessage;
+        } else if ("message" in err && typeof (err as { message?: string }).message === "string") {
+          message = (err as { message: string }).message;
         }
       }
       setSubmitErrorMsg(message);
@@ -273,7 +267,7 @@ export default function ProjectDetail() {
     setShowSuccess(false);
   };
 
-  const formatTimeAgo = (timestamp: bigint | number) => {
+  const formatTimeAgo = (timestamp: bigint | number): string => {
     const now = Date.now();
     const createdTime =
       typeof timestamp === "bigint"
@@ -287,26 +281,27 @@ export default function ProjectDetail() {
     return `${days}d ago`;
   };
 
-  const formatAddress = (addr: string) => {
+  const formatAddress = (addr: string): string => {
     if (!addr) return "";
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
-  const getAverageRating = () => {
+  const getAverageRating = (): string => {
     if (
       !product ||
-      typeof (product as any).ratingCount === "undefined" ||
-      Number((product as any).ratingCount) === 0 ||
-      typeof (product as any).totalRating === "undefined"
+      typeof (product as Partial<Product>).ratingCount === "undefined" ||
+      Number((product as Partial<Product>).ratingCount) === 0 ||
+      typeof (product as Partial<Product>).totalRating === "undefined"
     ) {
       return "0.0";
     }
     return (
-      Number((product as any).totalRating) / Number((product as any).ratingCount)
+      Number((product as Partial<Product>).totalRating) /
+      Number((product as Partial<Product>).ratingCount)
     ).toFixed(1);
   };
 
-  const getRatingDistribution = () => {
+  const getRatingDistribution = (): { [key: number]: number } => {
     const distribution: { [key: number]: number } = {
       5: 0,
       4: 0,
@@ -329,7 +324,14 @@ export default function ProjectDetail() {
   };
 
   // Process and filter feedbacks
-  const processedFeedbacks =
+  type ProcessedFeedback = Omit<Feedback, "id" | "productId" | "createdAt"> & {
+    id: number;
+    productId: number;
+    createdAt: number;
+    helpful: number;
+  };
+
+  const processedFeedbacks: ProcessedFeedback[] =
     contractFeedbacks && Array.isArray(contractFeedbacks)
       ? (contractFeedbacks as Feedback[]).map((feedback) => ({
           ...feedback,
@@ -383,7 +385,7 @@ export default function ProjectDetail() {
             Product Not Found
           </h3>
           <p className="text-gray-600 mb-4">
-            The product you're looking for doesn't exist or has been removed.
+            The product you&apos;re looking for doesn&apos;t exist or has been removed.
           </p>
           <button
             onClick={() => router.back()}
@@ -417,7 +419,7 @@ export default function ProjectDetail() {
               <span className="font-medium">Pending Approval</span>
             </div>
             <p className="text-amber-600 text-sm mt-1">
-              You'll earn 0.0001 ETH once the product owner approves your
+              You&apos;ll earn 0.0001 ETH once the product owner approves your
               feedback
             </p>
           </div>
@@ -440,18 +442,17 @@ export default function ProjectDetail() {
   }
 
   // Defensive: product fields may be undefined if contract returns empty
-  // Defensive: product fields may be undefined if contract returns empty
   const processedProduct = {
-    id: Number((product as any)?.id ?? 0),
-    name: (product as any)?.name ?? "",
-    description: (product as any)?.description ?? "",
-    imageUrl: (product as any)?.imageUrl ?? "/placeholder-image.jpg",
-    productUrl: (product as any)?.productUrl ?? "#",
-    owner: (product as any)?.owner ?? "",
-    totalRating: Number((product as any)?.totalRating ?? 0),
-    ratingCount: Number((product as any)?.ratingCount ?? 0),
-    createdAt: Number((product as any)?.createdAt ?? 0) * 1000,
-    isActive: (product as any)?.isActive ?? false,
+    id: Number((product as Partial<Product>)?.id ?? 0),
+    name: (product as Partial<Product>)?.name ?? "",
+    description: (product as Partial<Product>)?.description ?? "",
+    imageUrl: (product as Partial<Product>)?.imageUrl ?? "/placeholder-image.jpg",
+    productUrl: (product as Partial<Product>)?.productUrl ?? "#",
+    owner: (product as Partial<Product>)?.owner ?? "",
+    totalRating: Number((product as Partial<Product>)?.totalRating ?? 0),
+    ratingCount: Number((product as Partial<Product>)?.ratingCount ?? 0),
+    createdAt: Number((product as Partial<Product>)?.createdAt ?? 0) * 1000,
+    isActive: (product as Partial<Product>)?.isActive ?? false,
     category: "DeFi", // Default category for now
     tags: ["blockchain", "crypto"], // Default tags
     features: [
@@ -506,9 +507,6 @@ export default function ProjectDetail() {
                   <button className="p-2 rounded-full hover:bg-gray-100 transition-colors" onClick={() => handleShare()}>
                     <Share2 className="w-5 h-5 text-gray-600" />
                   </button>
-                  {/* <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-                    <Heart className="w-5 h-5 text-gray-600" />
-                  </button> */}
                 </div>
               </div>
 
@@ -541,12 +539,6 @@ export default function ProjectDetail() {
                   </span>{" "}
                   reviews
                 </div>
-                {/* <div className="flex items-center gap-1 text-gray-600">
-                  <Eye className="w-4 h-4" />
-                  <span>
-                    {Math.floor(Math.random() * 1000) + 500} views
-                  </span>
-                </div> */}
               </div>
 
               {/* Tags */}
@@ -596,11 +588,13 @@ export default function ProjectDetail() {
                   }}
                   disabled={
                     !isConnected ||
-                    hasReviewed ||
-                    (address &&
+                    !!hasReviewed ||
+                    (
+                      address &&
                       processedProduct.owner &&
                       address.toLowerCase() ===
-                        processedProduct.owner.toLowerCase())
+                        processedProduct.owner.toLowerCase()
+                    ) === true
                   }
                   className="flex-1 bg-white text-gray-700 px-6 py-3 rounded-xl font-medium border border-gray-300 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -873,14 +867,6 @@ export default function ProjectDetail() {
                         </span>
                       </div>
                       <p className="text-gray-700 mb-3">{feedback.comment}</p>
-                      {/* <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors">
-                          <ThumbsUp className="w-4 h-4" />
-                          <span className="text-sm">
-                            Helpful ({feedback.helpful})
-                          </span>
-                        </button>
-                      </div> */}
                     </div>
                   </div>
                 </div>

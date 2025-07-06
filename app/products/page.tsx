@@ -45,7 +45,7 @@ type ProductProcessed = Omit<Product, "id" | "createdAt" | "totalRating" | "rati
 const AllProducts = () => {
   const [filteredProducts, setFilteredProducts] = useState<ProductProcessed[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [ratingFilter, setRatingFilter] = useState("all");
@@ -353,8 +353,9 @@ const AllProducts = () => {
                       ...product,
                       owner: formatAddress(product.owner),
                     }}
-                    getAverageRating={getAverageRating}
-                    formatTimeAgo={formatTimeAgo}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    getAverageRating={getAverageRating as (product: any) => string | number}
+                    formatTimeAgo={formatTimeAgo as (date: string | number | Date) => string}
                   />
                 ))}
               </div>

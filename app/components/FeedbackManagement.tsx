@@ -17,6 +17,12 @@ interface Feedback {
   isVerified: boolean;
 }
 
+interface Product {
+  id: bigint;
+  name: string;
+  // Add other fields if needed
+}
+
 interface ProcessedFeedback {
   id: number;
   productId: number;
@@ -99,12 +105,13 @@ const FeedbackManagement: React.FC = () => {
   // Process contract data
   useEffect(() => {
     if (contractPendingFeedbacks && userProducts) {
-      const productMap = new Map();
-      (userProducts as any[]).forEach(product => {
+      // Specify the type for productMap and userProducts
+      const productMap = new Map<number, string>();
+      (userProducts as Product[]).forEach((product: Product) => {
         productMap.set(Number(product.id), product.name);
       });
 
-      const processed = (contractPendingFeedbacks as Feedback[]).map(feedback => ({
+      const processed = (contractPendingFeedbacks as Feedback[]).map((feedback: Feedback) => ({
         id: Number(feedback.id),
         productId: Number(feedback.productId),
         productName: productMap.get(Number(feedback.productId)) || `Product #${feedback.productId}`,

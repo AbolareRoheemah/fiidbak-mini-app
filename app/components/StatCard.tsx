@@ -1,6 +1,14 @@
 import React from 'react'
 
-export default function StatCard({ icon: Icon, title, value, subtitle, color = "blue" }: { icon: any, title: string, value: number, subtitle: string, color: string }) {
+interface StatCardProps {
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  title: string;
+  value: number;
+  subtitle: string;
+  color: string;
+}
+
+export default function StatCard({ icon: Icon, title, value, subtitle, color = "blue" }: StatCardProps) {
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
       <div className="flex items-center justify-between">

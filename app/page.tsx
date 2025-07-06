@@ -1,20 +1,11 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
-import { Star, Plus, TrendingUp, Users, MessageCircle, User, Heart, Eye, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Star, Plus, TrendingUp, Users, MessageCircle, ArrowRight } from 'lucide-react';
 import { useAccount, useReadContract } from 'wagmi';
 import ProductCard from "./components/ProductCard";
 import StatCard from "./components/StatCard";
 import { useRouter } from "next/navigation";
 import { abi } from './utils/abi';
-
-// Import Wallet, WalletDropdown, WalletDropdownDisconnect and ConnectWallet from onchainkit/wallet
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-} from "@coinbase/onchainkit/wallet";
-import { CustomConnectButton } from "./components/ConnectButton";
 
 const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
 
@@ -31,9 +22,22 @@ interface Product {
   isActive: boolean;
 }
 
+interface ProcessedProduct {
+  id: number;
+  owner: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  productUrl: string;
+  createdAt: number;
+  totalRating: number;
+  ratingCount: number;
+  isActive: boolean;
+}
+
 export default function App() {
-  const { address, isConnected } = useAccount();
-  const [products, setProducts] = useState<any[]>([]);
+  const { } = useAccount();
+  const [products, setProducts] = useState<ProcessedProduct[]>([]);
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalFeedback: 0,
@@ -55,22 +59,11 @@ export default function App() {
     functionName: 'getAllProducts',
   });
 
-  // Fetch reward pool status
-  const {
-    data: rewardPoolStatus,
-  } = useReadContract({
-    address: contractAddress,
-    abi: abi,
-    functionName: 'getRewardPoolStatus',
-  });
-
   // Process contract data
   useEffect(() => {
     if (contractProducts) {
-      console.log('Raw contract products:', contractProducts);
-      
       // Convert BigInt values and process data
-      const processedProducts = (contractProducts as Product[]).map(product => ({
+      const processedProducts: ProcessedProduct[] = (contractProducts as Product[]).map(product => ({
         id: Number(product.id),
         name: product.name,
         description: product.description,
@@ -116,23 +109,18 @@ export default function App() {
     }
   }, [contractProducts, isProductsLoading]);
 
-  const getAverageRating = (product: any) => {
+  const getAverageRating = (product: ProcessedProduct) => {
     if (product.ratingCount === 0) return '0.0';
     return (product.totalRating / product.ratingCount).toFixed(1);
   };
 
-  const formatTimeAgo = (timestamp: any) => {
+  const formatTimeAgo = (timestamp: number) => {
     const now = Date.now();
     const diff = now - timestamp;
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     if (days === 0) return 'Today';
     if (days === 1) return 'Yesterday';
     return `${days} days ago`;
-  };
-
-  const formatEther = (wei: bigint | number) => {
-    const value = typeof wei === 'bigint' ? Number(wei) : wei;
-    return (value / 1e18).toFixed(4);
   };
 
   return (
@@ -200,24 +188,6 @@ export default function App() {
               />
             </div>
 
-            {/* Reward Pool Status */}
-            {/* {rewardPoolStatus && (
-              <div className="bg-gradient-to-r from-green-500 to-blue-600 rounded-2xl p-6 text-white mb-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">Reward Pool Status</h3>
-                    <p className="text-green-100">
-                      {formatEther((rewardPoolStatus as any[])[0] || 0)} ETH available • 
-                      {' '}{(rewardPoolStatus as any[])[2] || 0} rewards remaining
-                    </p>
-                  </div>
-                  <div className="bg-white/20 rounded-full p-3">
-                    <Star className="w-6 h-6" />
-                  </div>
-                </div>
-              </div>
-            )} */}
-
             {/* How it works */}
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
               <div className="bg-white rounded-3xl shadow-xl p-8">
@@ -263,10 +233,11 @@ export default function App() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {products.map((product) => (
                       <ProductCard 
-                        key={product.id} 
-                        product={product} 
-                        getAverageRating={getAverageRating} 
-                        formatTimeAgo={formatTimeAgo} 
+                        key={product.id}
+                        product={product}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        getAverageRating={getAverageRating as (product: any) => string | number}
+                        formatTimeAgo={formatTimeAgo as (date: string | number | Date) => string}
                       />
                     ))}
                   </div>

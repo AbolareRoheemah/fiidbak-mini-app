@@ -1,8 +1,8 @@
 "use client"
 import React, { useState } from 'react';
-import { Star, MessageCircle, Award, ArrowRight, Gift } from 'lucide-react';
+import { Star, MessageCircle, Award, ArrowRight } from 'lucide-react';
 
-const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
+const Onboarding = () => {
   const [step, setStep] = useState(0);
 
   const steps = [
@@ -56,7 +56,7 @@ const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
             if (step < steps.length - 1) {
               setStep(step + 1);
             } else {
-              onComplete();
+              // onComplete();
             }
           }}
           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2"

@@ -1,3 +1,4 @@
+"use client"
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, Clock, Star, User, MessageCircle, AlertTriangle, ThumbsUp, ThumbsDown } from 'lucide-react';
 

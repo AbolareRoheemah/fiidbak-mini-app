@@ -1,9 +1,27 @@
 import React from 'react'
-import { Star, MessageCircle, ExternalLink, Heart, Eye } from 'lucide-react';
+import { Star, MessageCircle, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-export default function ProductCard({ product, getAverageRating, formatTimeAgo }: { product: any, getAverageRating: any, formatTimeAgo: any }) {
-    const router = useRouter();
+interface Product {
+  id: number | string;
+  name: string;
+  imageUrl: string;
+  productUrl: string;
+  description: string;
+  owner?: string;
+  createdAt: number | string | Date;
+  ratingCount: number;
+  // Add other fields if needed
+}
+
+interface ProductCardProps {
+  product: Product;
+  getAverageRating: (product: Product) => number | string;
+  formatTimeAgo: (date: number | string | Date) => string;
+}
+
+export default function ProductCard({ product, getAverageRating, formatTimeAgo }: ProductCardProps) {
+  const router = useRouter();
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group cursor-pointer" onClick={() => router.push(`/project_detail/${product.id}`)}>

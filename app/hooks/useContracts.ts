@@ -478,7 +478,7 @@ export function useCanClaimRewards(userAddress?: `0x${string}`) {
 type ProductWithRating = {
   ratingCount?: bigint | number | string;
   totalRating?: bigint | number | string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export function useFormattedProductRating(productId?: number) {

@@ -7,7 +7,6 @@ import { parseEther } from 'viem';
 import { CustomConnectButton } from '../components/ConnectButton';
 import { toast } from 'sonner';
 import { abi } from '../utils/abi';
-import { ConnectWallet, Wallet, WalletDropdown, WalletDropdownDisconnect } from '@coinbase/onchainkit/wallet';
 
 const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
 
@@ -29,7 +28,7 @@ export default function UploadProduct() {
   const router = useRouter();
 
   // Direct wagmi hooks
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const { 
     data: hash, 
     writeContract, 
@@ -113,7 +112,7 @@ export default function UploadProduct() {
   };
 
   // Simulate image upload to get a URL (replace with your actual upload logic)
-  const uploadImageAndGetUrl = async (file: File): Promise<string> => {
+  const uploadImageAndGetUrl = async (): Promise<string> => {
     // TODO: Replace with actual upload logic (e.g., upload to IPFS, S3, etc.)
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -180,7 +179,7 @@ export default function UploadProduct() {
       let imageUrl = formData.imageUrl;
       if (file) {
         console.log('Uploading file...');
-        imageUrl = await uploadImageAndGetUrl(file);
+        imageUrl = await uploadImageAndGetUrl();
         console.log('File uploaded, URL:', imageUrl);
       }
 
