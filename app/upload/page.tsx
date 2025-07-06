@@ -469,6 +469,9 @@ export default function UploadProduct() {
                   <p className="text-blue-700 text-sm mt-1">
                     Hash: {hash.slice(0, 10)}...{hash.slice(-8)}
                   </p>
+                  <p className="text-blue-700 text-sm mt-1 underline" onClick={() => router.push("products")}>
+                    See All Products
+                  </p>
                   {isConfirming && (
                     <p className="text-blue-600 text-sm mt-1">Waiting for confirmation...</p>
                   )}

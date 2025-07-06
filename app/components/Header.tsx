@@ -1,23 +1,23 @@
 "use client"
 import React from 'react'
-import { CustomConnectButton } from './ConnectButton'
 import { Star, Plus, User } from 'lucide-react'
 import {useRouter} from 'next/navigation'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 
 export default function Header() {
     const router = useRouter()
   return (
     <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10 w-full">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between h-auto sm:h-16 py-4 sm:py-0 gap-4 sm:gap-0">
             {/* Logo and Title */}
-            <div className="flex items-center gap-3 mb-2 sm:mb-0">
+            <div className="flex items-center gap-3 mb-2 sm:mb-0 cursor-pointer" onClick={() => router.push("/")}>
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <Star className="w-5 h-5 text-white" />
               </div>
               <h1 className="text-xl font-bold text-gray-900">Fiidbak</h1>
                 {/* Wallet Connect and Dropdown */}
-                <CustomConnectButton />
+                <ConnectButton />
             </div>
             {/* Actions */}
             <div className="flex flex-col xs:flex-row gap-2 sm:gap-3 w-full sm:w-auto">

@@ -1,68 +1,197 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { User, Settings, Star, Eye, MessageCircle, TrendingUp, Calendar, Edit3, Trash2, ExternalLink, Plus, Award, BarChart3 } from 'lucide-react';
+import { User, Settings, Star, MessageCircle, TrendingUp, Calendar, Edit3, Trash2, ExternalLink, Plus, Award, BarChart3 } from 'lucide-react';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useRouter } from 'next/navigation';
 import ProductCard from '../components/ProductCard';
 import StatCard from '../components/StatCard';
 import FeedbackManagement from '../components/FeedbackManagement';
+import { abi } from '../utils/abi';
+import { toast } from 'sonner';
+
+const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
+
+// Product type based on your contract
+interface Product {
+  id: bigint;
+  owner: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  productUrl: string;
+  createdAt: bigint;
+  totalRating: bigint;
+  ratingCount: bigint;
+  isActive: boolean;
+}
+
+interface Feedback {
+  id: bigint;
+  productId: bigint;
+  reviewer: string;
+  comment: string;
+  rating: number;
+  createdAt: bigint;
+  isVerified: boolean;
+}
 
 export default function UserProfile() {
+  const { address, isConnected } = useAccount();
+  const router = useRouter();
+  
   const [activeTab, setActiveTab] = useState('products');
   const [userProducts, setUserProducts] = useState<any[]>([]);
   const [userStats, setUserStats] = useState<any>({});
-  const [userInfo, setUserInfo] = useState<any>({});
-  const [pendingFeedbackCount, setPendingFeedbackCount] = useState(2); // Example count
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock user data
-  const mockUserInfo = {
-    address: "0x1234567890abcdef1234567890abcdef12345678",
-    joinDate: Date.now() - 86400000 * 30,
-    totalProducts: 3,
-    totalReviews: 24,
-    averageRating: 4.3,
-    profileViews: 1250
+  // Fetch user's products
+  const { 
+    data: contractProducts, 
+    isLoading: isProductsLoading,
+    refetch: refetchProducts 
+  } = useReadContract({
+    address: contractAddress,
+    abi: abi,
+    functionName: 'getUserProducts',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address
+    }
+  });
+
+  // Fetch user's pending rewards
+  const { 
+    data: pendingRewards,
+    refetch: refetchRewards 
+  } = useReadContract({
+    address: contractAddress,
+    abi: abi,
+    functionName: 'getPendingRewards',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address
+    }
+  });
+
+  // Fetch pending feedbacks for management
+  const { 
+    data: pendingFeedbacks,
+    isLoading: isPendingFeedbacksLoading 
+  } = useReadContract({
+    address: contractAddress,
+    abi: abi,
+    functionName: 'getPendingFeedbacks',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address
+    }
+  });
+
+  const handleClaimRewards = () => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+  
+    if (userStats.pendingRewards <= 0) {
+      toast.error('No rewards to claim');
+      return;
+    }
+  
+    claimRewards({
+      address: contractAddress,
+      abi: abi,
+      functionName: 'claimRewards',
+      args: [],
+    });
   };
 
-  const mockUserProducts = [
-    {
-      id: 1,
-      name: "CryptoTracker Pro",
-      description: "Advanced cryptocurrency portfolio tracker with real-time alerts",
-      imageUrl: "https://images.unsplash.com/photo-1642104704074-907c0698cbd9?w=300&h=200&fit=crop",
-      productUrl: "https://cryptotracker.pro",
-      totalRating: 22,
-      ratingCount: 5,
-      views: 1250,
-      createdAt: Date.now() - 86400000 * 7,
-      isActive: true,
-      category: "DeFi"
-    },
-    {
-      id: 2,
-      name: "NFT Analytics Dashboard",
-      description: "Comprehensive NFT collection analytics and floor price tracking",
-      imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&h=200&fit=crop",
-      productUrl: "https://nftanalytics.xyz",
-      totalRating: 35,
-      ratingCount: 8,
-      views: 890,
-      createdAt: Date.now() - 86400000 * 14,
-      isActive: true,
-      category: "NFT"
-    },
-    {
-      id: 3,
-      name: "DeFi Yield Optimizer",
-      description: "Automated yield farming strategy optimizer for maximum returns",
-      imageUrl: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=300&h=200&fit=crop",
-      productUrl: "https://defiyield.io",
-      totalRating: 28,
-      ratingCount: 7,
-      views: 2100,
-      createdAt: Date.now() - 86400000 * 21,
-      isActive: false,
-      category: "DeFi"
+  const {
+    data: claimHash,
+    writeContract: claimRewards,
+    isPending: isClaimPending,
+    error: claimError
+  } = useWriteContract();
+  
+  const {
+    isLoading: isClaimConfirming,
+    isSuccess: isClaimConfirmed
+  } = useWaitForTransactionReceipt({
+    hash: claimHash,
+  });
+
+  // Add effect to handle claim success
+useEffect(() => {
+  if (isClaimConfirmed) {
+    toast.success("Rewards claimed successfully!");
+    refetchRewards();
+    // Refresh user stats
+    setUserStats((prev: any) => ({
+      ...prev,
+      pendingRewards: 0
+    }));
+  }
+}, [isClaimConfirmed, refetchRewards]);
+useEffect(() => {
+  if (claimError) {
+    toast.error("Failed to claim rewards. Please try again.");
+  }
+}, [claimError]);
+
+  // Process contract data
+  useEffect(() => {
+    if (contractProducts && address) {
+      console.log('Raw user products:', contractProducts);
+      
+      // Convert BigInt values to numbers for easier handling
+      const processedProducts = (contractProducts as Product[]).map(product => ({
+        id: Number(product.id),
+        name: product.name,
+        description: product.description,
+        imageUrl: product.imageUrl,
+        productUrl: product.productUrl,
+        owner: product.owner,
+        totalRating: Number(product.totalRating),
+        ratingCount: Number(product.ratingCount),
+        createdAt: Number(product.createdAt) * 1000, // Convert to milliseconds
+        isActive: product.isActive,
+        category: "DeFi", // Default category for now
+        // views: Math.floor(Math.random() * 2000) + 100, // Removed view feature
+      }));
+
+      setUserProducts(processedProducts);
+
+      // Calculate user stats
+      // const totalViews = processedProducts.reduce((sum, p) => sum + p.views, 0); // Removed view feature
+      const totalFeedback = processedProducts.reduce((sum, p) => sum + p.ratingCount, 0);
+      const averageRating = processedProducts.length > 0 
+        ? processedProducts.reduce((sum, p) => {
+            const rating = p.ratingCount > 0 ? p.totalRating / p.ratingCount : 0;
+            return sum + rating;
+          }, 0) / processedProducts.length
+        : 0;
+
+      setUserStats({
+        // totalViews, // Removed view feature
+        totalFeedback,
+        averageRating,
+        pendingRewards: pendingRewards ? Number(pendingRewards) : 0
+      });
+
+      setIsLoading(false);
+    } else if (!isProductsLoading && address) {
+      // No products found
+      setUserProducts([]);
+      setUserStats({
+        // totalViews: 0, // Removed view feature
+        totalFeedback: 0,
+        averageRating: 0,
+        pendingRewards: pendingRewards ? Number(pendingRewards) : 0
+      });
+      setIsLoading(false);
     }
-  ];
+  }, [contractProducts, address, isProductsLoading, pendingRewards]);
 
   const formatAddress = (address: string) => {
     if (!address || typeof address !== 'string' || address.length < 10) return '';
@@ -79,41 +208,61 @@ export default function UserProfile() {
   };
 
   const getAverageRating = (product: any) => {
-    if (product.ratingCount === 0) return 0;
+    if (product.ratingCount === 0) return '0.0';
     return (product.totalRating / product.ratingCount).toFixed(1);
   };
 
-  useEffect(() => {
-    setUserInfo(mockUserInfo);
-    setUserProducts(mockUserProducts);
-    setUserStats({
-      totalViews: mockUserProducts.reduce((sum, p) => sum + p.views, 0),
-      totalFeedback: mockUserProducts.reduce((sum, p) => sum + p.ratingCount, 0),
-      averageRating: mockUserProducts.reduce((sum, p) => sum + (p.totalRating / p.ratingCount), 0) / mockUserProducts.length
-    });
-    // Example: set pending feedback count (could be fetched from API)
-    setPendingFeedbackCount(2);
-  }, []);
+  const formatEther = (wei: bigint | number) => {
+    const value = typeof wei === 'bigint' ? Number(wei) : wei;
+    return (value / 1e18).toFixed(4);
+  };
 
-  return (
-  <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold text-gray-900">My Profile</h1>
-            </div>
-            
-            <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-              <Settings className="w-5 h-5 text-gray-600" />
-            </button>
+  // Get user join date (mock for now, could be enhanced)
+  const getUserJoinDate = () => {
+    if (userProducts.length > 0) {
+      const oldestProduct = userProducts.reduce((oldest, product) => 
+        product.createdAt < oldest.createdAt ? product : oldest
+      );
+      return oldestProduct.createdAt;
+    }
+    return Date.now() - 86400000 * 30; // Default to 30 days ago
+  };
+
+  // Check if user is not connected
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-8 shadow-xl max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <User className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Connect Your Wallet</h2>
+          <p className="text-gray-600 mb-6">Please connect your wallet to view your profile.</p>
+          <ConnectButton />
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading || isProductsLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Profile</h3>
+            <p className="text-gray-600">Fetching your data from the blockchain...</p>
           </div>
         </div>
       </div>
+    );
+  }
+
+  const pendingFeedbackCount = pendingFeedbacks ? (pendingFeedbacks as Feedback[]).length : 0;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Header */}
@@ -121,7 +270,7 @@ export default function UserProfile() {
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative">
             {/* Profile Picture with fun ring effect */}
             <div className="relative mb-4 sm:mb-0">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg ring-4 ring-blue-200 animate-pulse-slow">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg ring-4 ring-blue-200">
                 <User className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
               </div>
               {/* Decorative badge */}
@@ -132,30 +281,56 @@ export default function UserProfile() {
             {/* Info and stats */}
             <div className="flex-1 w-full flex flex-col gap-2 text-center sm:text-left">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 break-all flex flex-col sm:flex-row items-center sm:items-baseline gap-2 sm:gap-2 justify-center sm:justify-start">
-                {formatAddress(userInfo.address)}
+                {formatAddress(address || '')}
               </h2>
               <p className="text-gray-600 mb-2 text-sm sm:text-base flex items-center gap-1 justify-center sm:justify-start">
                 <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                Member since {formatTimeAgo(userInfo.joinDate)}
+                Member since {formatTimeAgo(getUserJoinDate())}
               </p>
-              <div className="flex flex-col xs:flex-row items-center xs:items-center gap-2 xs:gap-6 justify-center sm:justify-start">
+              <div className="flex flex-col xs:flex-row items-center sm:items-start gap-2 xs:gap-6 justify-center sm:justify-start">
                 <div className="flex items-center gap-2 bg-yellow-50 px-2 py-1 rounded-lg">
                   <Award className="w-5 h-5 text-yellow-500" />
                   <span className="text-sm font-medium text-gray-700">
                     {userStats.averageRating?.toFixed(1) || '0.0'} <span className="hidden xs:inline">Average Rating</span>
                   </span>
                 </div>
-                <div className="flex items-center gap-2 bg-green-50 px-2 py-1 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-green-500" />
-                  <span className="text-sm font-medium text-gray-700">
-                    {userStats.totalViews || 0} <span className="hidden xs:inline">Total Views</span>
-                  </span>
-                </div>
+                {/* Removed Total Views Stat */}
+                {/* Show pending rewards */}
+                {userStats.pendingRewards > 0 && (
+                  <div className="bg-white border border-gray-200 rounded-2xl p-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Claim Your Rewards</h4>
+                    <p className="text-gray-600 mb-4">
+                      You have {formatEther(userStats.pendingRewards)} ETH waiting to be claimed from approved feedback.
+                    </p>
+                    <button
+                      onClick={handleClaimRewards}
+                      disabled={isClaimPending || isClaimConfirming}
+                      className="bg-green-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isClaimPending || isClaimConfirming ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          {isClaimPending ? 'Submitting...' : 'Confirming...'}
+                        </>
+                      ) : (
+                        'Claim Rewards'
+                      )}
+                    </button>
+                    {claimHash && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        Transaction: {claimHash.slice(0, 10)}...{claimHash.slice(-8)}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-            {/* Add Product Button, floating on mobile */}
+            {/* Add Product Button */}
             <div className="w-full sm:w-auto mt-4 sm:mt-0 flex-shrink-0 flex justify-center sm:justify-end">
-              <button className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400">
+              <button 
+                onClick={() => router.push('/upload')}
+                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
                 <Plus className="w-5 h-5" />
                 <span className="hidden xs:inline">Add Product</span>
                 <span className="inline xs:hidden">Add</span>
@@ -169,7 +344,7 @@ export default function UserProfile() {
           <StatCard 
             icon={BarChart3}
             title="Total Products"
-            value={userInfo.totalProducts || 0}
+            value={userProducts.length}
             subtitle="Active listings"
             color="blue"
           />
@@ -180,18 +355,12 @@ export default function UserProfile() {
             subtitle="Community feedback"
             color="green"
           />
-          <StatCard 
-            icon={Eye}
-            title="Profile Views"
-            value={userInfo.profileViews || 0}
-            subtitle="This month"
-            color="purple"
-          />
+          {/* Removed Total Views StatCard */}
           <StatCard 
             icon={Star}
-            title="Average Rating"
-            value={userStats.averageRating?.toFixed(1) || '0.0'}
-            subtitle="Overall score"
+            title="Pending Rewards"
+            value={Number(formatEther(userStats.pendingRewards || 0))}
+            subtitle="Ready to claim"
             color="yellow"
           />
         </div>
@@ -199,10 +368,10 @@ export default function UserProfile() {
         {/* Tabs Navigation */}
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
           <div className="border-b border-gray-200">
-            <nav className="flex">
+            <nav className="flex overflow-x-auto">
               <button
                 onClick={() => setActiveTab('products')}
-                className={`px-6 py-4 text-sm font-medium transition-colors ${
+                className={`px-6 py-4 text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === 'products'
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
@@ -210,19 +379,10 @@ export default function UserProfile() {
               >
                 My Products ({userProducts.length})
               </button>
-              <button
-                onClick={() => setActiveTab('analytics')}
-                className={`px-6 py-4 text-sm font-medium transition-colors ${
-                  activeTab === 'analytics'
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Analytics
-              </button>
+              {/* Removed Analytics Tab */}
               <button
                 onClick={() => setActiveTab('reviews')}
-                className={`px-6 py-4 text-sm font-medium transition-colors ${
+                className={`px-6 py-4 text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === 'reviews'
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
@@ -230,16 +390,25 @@ export default function UserProfile() {
               >
                 Reviews Received
               </button>
-              {/* Add new tab in the tabs navigation */}
               <button
                 onClick={() => setActiveTab('feedback-management')}
-                className={`px-6 py-4 text-sm font-medium transition-colors ${
+                className={`px-6 py-4 text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === 'feedback-management'
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 Manage Feedback ({pendingFeedbackCount})
+              </button>
+              <button
+                onClick={() => setActiveTab('rewards')}
+                className={`px-6 py-4 text-sm font-medium transition-colors whitespace-nowrap ${
+                  activeTab === 'rewards'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                My Rewards
               </button>
             </nav>
           </div>
@@ -262,7 +431,7 @@ export default function UserProfile() {
                     <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
                       <option>Sort by Date</option>
                       <option>Sort by Rating</option>
-                      <option>Sort by Views</option>
+                      {/* <option>Sort by Views</option> */}
                     </select>
                   </div>
                 </div>
@@ -270,7 +439,22 @@ export default function UserProfile() {
                 {userProducts.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {userProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} getAverageRating={getAverageRating} formatTimeAgo={formatTimeAgo} />
+                      <div key={product.id} className="relative">
+                        <ProductCard 
+                          product={product} 
+                          getAverageRating={getAverageRating} 
+                          formatTimeAgo={formatTimeAgo} 
+                        />
+                        {/* Owner actions overlay */}
+                        <div className="absolute top-4 right-4 flex gap-2">
+                          {/* <button className="p-2 bg-white/90 rounded-full shadow hover:bg-white transition-colors">
+                            <Edit3 className="w-4 h-4 text-gray-600" />
+                          </button> */}
+                          {/* <button className="p-2 bg-white/90 rounded-full shadow hover:bg-white transition-colors">
+                            <Trash2 className="w-4 h-4 text-gray-600" />
+                          </button> */}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -280,7 +464,10 @@ export default function UserProfile() {
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">No products yet</h3>
                     <p className="text-gray-600 mb-6">Start by uploading your first product to get feedback from the community</p>
-                    <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200">
+                    <button 
+                      onClick={() => router.push('/upload')}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                    >
                       Upload Your First Product
                     </button>
                   </div>
@@ -288,112 +475,64 @@ export default function UserProfile() {
               </div>
             )}
 
-            {/* Analytics Tab */}
-            {/* {activeTab === 'analytics' && (
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Analytics Overview</h3>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                  <div className="bg-gray-50 rounded-2xl p-6">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Views Over Time</h4>
-                    <div className="h-40 bg-white rounded-xl flex items-center justify-center">
-                      <p className="text-gray-500">Chart placeholder - Views analytics</p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded-2xl p-6">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h4>
-                    <div className="h-40 bg-white rounded-xl flex items-center justify-center">
-                      <p className="text-gray-500">Chart placeholder - Rating analytics</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 rounded-2xl p-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Product Performance</h4>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="text-left border-b border-gray-200">
-                          <th className="pb-3 text-sm font-medium text-gray-600">Product</th>
-                          <th className="pb-3 text-sm font-medium text-gray-600">Views</th>
-                          <th className="pb-3 text-sm font-medium text-gray-600">Reviews</th>
-                          <th className="pb-3 text-sm font-medium text-gray-600">Avg Rating</th>
-                          <th className="pb-3 text-sm font-medium text-gray-600">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="space-y-3">
-                        {userProducts.map((product) => (
-                          <tr key={product.id} className="border-b border-gray-100">
-                            <td className="py-3">
-                              <div className="flex items-center gap-3">
-                                <img src={product.imageUrl} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
-                                <span className="font-medium text-gray-900">{product.name}</span>
-                              </div>
-                            </td>
-                            <td className="py-3 text-gray-700">{product.views}</td>
-                            <td className="py-3 text-gray-700">{product.ratingCount}</td>
-                            <td className="py-3 text-gray-700">{getAverageRating(product)}</td>
-                            <td className="py-3">
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                product.isActive 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-gray-100 text-gray-600'
-                              }`}>
-                                {product.isActive ? 'Active' : 'Inactive'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )} */}
-
             {/* Reviews Tab */}
             {activeTab === 'reviews' && (
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-6">Reviews Received</h3>
-                <div className="space-y-6">
-                  {/* Sample review items */}
-                  <div className="bg-gray-50 rounded-2xl p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium text-gray-900">0x8765...4321</span>
-                          <span className="text-gray-500 text-sm">reviewed</span>
-                          <span className="font-medium text-gray-900">CryptoTracker Pro</span>
-                        </div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="flex items-center">
-                            {[1, 2, 3, 4, 5].map(star => (
-                              <Star key={star} className="w-4 h-4 text-yellow-400 fill-current" />
-                            ))}
-                          </div>
-                          <span className="text-sm text-gray-600">2 hours ago</span>
-                        </div>
-                        <p className="text-gray-700">
-                          "Excellent product! The interface is intuitive and the real-time tracking is spot on. Love the portfolio analytics feature."
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">More reviews will appear here as users interact with your products.</p>
-                  </div>
+                <div className="text-center py-12">
+                  <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">No Reviews Yet</h4>
+                  <p className="text-gray-600">Reviews will appear here as users interact with your products.</p>
                 </div>
               </div>
             )}
 
-            {/* Add tab content */}
+            {/* Feedback Management Tab */}
             {activeTab === 'feedback-management' && (
               <FeedbackManagement />
+            )}
+
+            {/* Rewards Tab */}
+            {activeTab === 'rewards' && (
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-6">My Rewards</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div className="bg-green-50 rounded-2xl p-6 text-center">
+                    <Award className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-gray-900">{formatEther(userStats.pendingRewards || 0)} ETH</p>
+                    <p className="text-sm text-gray-600">Pending Rewards</p>
+                  </div>
+                  <div className="bg-blue-50 rounded-2xl p-6 text-center">
+                    <Star className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-gray-900">{userStats.totalFeedback || 0}</p>
+                    <p className="text-sm text-gray-600">Reviews Given</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-2xl p-6 text-center">
+                    <TrendingUp className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-gray-900">0.0000 ETH</p>
+                    <p className="text-sm text-gray-600">Total Earned</p>
+                  </div>
+                </div>
+
+                {userStats.pendingRewards > 0 ? (
+                  <div className="bg-white border border-gray-200 rounded-2xl p-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Claim Your Rewards</h4>
+                    <p className="text-gray-600 mb-4">
+                      You have {formatEther(userStats.pendingRewards)} ETH waiting to be claimed from approved feedback.
+                    </p>
+                    <button className="bg-green-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-green-700 transition-colors">
+                      Claim Rewards
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">No Rewards Yet</h4>
+                    <p className="text-gray-600">Submit quality feedback to earn rewards!</p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
