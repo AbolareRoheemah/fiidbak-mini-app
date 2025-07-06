@@ -117,37 +117,50 @@ export default function UserProfile() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Header */}
-        <div className="bg-white rounded-3xl shadow-xl p-8 mb-8">
-          <div className="flex items-start gap-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-              <User className="w-10 h-10 text-white" />
+        <div className="bg-white rounded-3xl shadow-xl p-4 sm:p-8 mb-8">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative">
+            {/* Profile Picture with fun ring effect */}
+            <div className="relative mb-4 sm:mb-0">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg ring-4 ring-blue-200 animate-pulse-slow">
+                <User className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+              </div>
+              {/* Decorative badge */}
+              <span className="absolute -bottom-2 -right-2 bg-yellow-400 text-white rounded-full p-1 shadow-md flex items-center justify-center">
+                <Award className="w-4 h-4" />
+              </span>
             </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            {/* Info and stats */}
+            <div className="flex-1 w-full flex flex-col gap-2 text-center sm:text-left">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 break-all flex flex-col sm:flex-row items-center sm:items-baseline gap-2 sm:gap-2 justify-center sm:justify-start">
                 {formatAddress(userInfo.address)}
               </h2>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 mb-2 text-sm sm:text-base flex items-center gap-1 justify-center sm:justify-start">
+                <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                 Member since {formatTimeAgo(userInfo.joinDate)}
               </p>
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col xs:flex-row items-center xs:items-center gap-2 xs:gap-6 justify-center sm:justify-start">
+                <div className="flex items-center gap-2 bg-yellow-50 px-2 py-1 rounded-lg">
                   <Award className="w-5 h-5 text-yellow-500" />
                   <span className="text-sm font-medium text-gray-700">
-                    {userStats.averageRating?.toFixed(1) || '0.0'} Average Rating
+                    {userStats.averageRating?.toFixed(1) || '0.0'} <span className="hidden xs:inline">Average Rating</span>
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-green-50 px-2 py-1 rounded-lg">
                   <TrendingUp className="w-5 h-5 text-green-500" />
                   <span className="text-sm font-medium text-gray-700">
-                    {userStats.totalViews || 0} Total Views
+                    {userStats.totalViews || 0} <span className="hidden xs:inline">Total Views</span>
                   </span>
                 </div>
               </div>
             </div>
-            <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              Add Product
-            </button>
+            {/* Add Product Button, floating on mobile */}
+            <div className="w-full sm:w-auto mt-4 sm:mt-0 flex-shrink-0 flex justify-center sm:justify-end">
+              <button className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <Plus className="w-5 h-5" />
+                <span className="hidden xs:inline">Add Product</span>
+                <span className="inline xs:hidden">Add</span>
+              </button>
+            </div>
           </div>
         </div>
 

@@ -242,25 +242,24 @@ contract ProductFeedback is Ownable, ReentrancyGuard {
     function approveFeedback(uint256 _feedbackId) external nonReentrant {
         Feedback memory feedback = feedbacks[_feedbackId];
         require(feedback.id != 0, "Feedback does not exist");
-        require(
-            products[feedback.productId].owner == msg.sender,
-            "Not product owner"
-        );
+        require(products[feedback.productId].owner == msg.sender, "Not product owner");
         require(!feedbackApproved[_feedbackId], "Already approved");
         require(!feedbackRejected[_feedbackId], "Feedback was rejected");
-
+        
         feedbackApproved[_feedbackId] = true;
-
-        // Add reward to reviewer's pending balance
+        
+        // Only reward if pool has sufficient funds
         if (rewardPool >= feedbackReward) {
             pendingRewards[feedback.reviewer] += feedbackReward;
             rewardPool -= feedbackReward;
             feedbackRewarded[_feedbackId] = true;
-
+            
             emit FeedbackRewarded(feedback.reviewer, feedbackReward);
+            emit FeedbackApproved(_feedbackId, feedback.reviewer, feedbackReward);
+        } else {
+            // Approve but no reward due to insufficient pool
+            emit FeedbackApproved(_feedbackId, feedback.reviewer, 0);
         }
-
-        emit FeedbackApproved(_feedbackId, feedback.reviewer, feedbackReward);
     }
 
     function rejectFeedback(
