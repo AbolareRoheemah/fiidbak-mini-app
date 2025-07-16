@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import {
   Search,
   ExternalLink,
-  TrendingUp,
   Grid,
   List,
 } from "lucide-react";
@@ -347,8 +346,6 @@ const AllProducts = () => {
             {viewMode === "grid" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                 {currentProducts.map((product) => (
-                  <div>
-                    {product.imageUrl} 
                   <ProductCard
                     key={product.id}
                     product={{
@@ -359,7 +356,6 @@ const AllProducts = () => {
                     getAverageRating={getAverageRating as (product: any) => string | number}
                     formatTimeAgo={formatTimeAgo as (date: string | number | Date) => string}
                   />
-                  </div>
                 ))}
               </div>
             ) : (

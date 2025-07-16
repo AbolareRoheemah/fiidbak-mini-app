@@ -1,6 +1,6 @@
 // wagmi.ts - Custom wallet selection
 import '@rainbow-me/rainbowkit/styles.css';
-import { connectorsForWallets, getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { connectorsForWallets } from '@rainbow-me/rainbowkit';
 import { createConfig, http } from 'wagmi';
 import { baseSepolia, base } from 'wagmi/chains';
 import {
