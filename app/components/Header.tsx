@@ -18,22 +18,24 @@ export default function Header() {
                 <Star className="w-5 h-5 text-white" />
               </div>
               <h1 className="text-xl font-bold text-gray-900">Fiidbak</h1>
-                {/* Wallet Connect and Dropdown */}
-                {/* <ConnectButton /> */}
-                <Wallet className="z-10">
-                <ConnectWallet>
-                  <Name className="text-inherit" />
-                </ConnectWallet>
-                <WalletDropdown>
-                  <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
-                    <Avatar />
-                    <Name />
-                    <Address />
-                    <EthBalance />
-                  </Identity>
-                  <WalletDropdownDisconnect />
-                </WalletDropdown>
-              </Wallet>
+                {/* Wallet Connect */}
+              <div className="flex items-center">
+                <Wallet>
+                  <ConnectWallet className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200">
+                    <Avatar className="h-6 w-6" />
+                    <Name className="text-inherit font-medium" />
+                  </ConnectWallet>
+                  <WalletDropdown>
+                    <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
+                      <Avatar />
+                      <Name />
+                      <Address />
+                      <EthBalance />
+                    </Identity>
+                    <WalletDropdownDisconnect />
+                  </WalletDropdown>
+                </Wallet>
+              </div>
             </div>
             {/* Actions */}
             <div className="flex flex-col xs:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
