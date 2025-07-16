@@ -246,7 +246,7 @@ const AllProducts = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
@@ -258,14 +258,14 @@ const AllProducts = () => {
 
             <div className="flex items-center gap-4">
               {/* Refresh Button */}
-              <button
+              {/* <button
                 onClick={() => refetch()}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 title="Refresh products"
                 type="button"
               >
                 <TrendingUp className="w-5 h-5 text-gray-600" />
-              </button>
+              </button> */}
 
               {/* View Mode Toggle */}
               <div className="flex items-center bg-gray-100 rounded-lg p-1">
@@ -347,6 +347,8 @@ const AllProducts = () => {
             {viewMode === "grid" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                 {currentProducts.map((product) => (
+                  <div>
+                    {product.imageUrl} 
                   <ProductCard
                     key={product.id}
                     product={{
@@ -357,6 +359,7 @@ const AllProducts = () => {
                     getAverageRating={getAverageRating as (product: any) => string | number}
                     formatTimeAgo={formatTimeAgo as (date: string | number | Date) => string}
                   />
+                  </div>
                 ))}
               </div>
             ) : (

@@ -2,7 +2,9 @@
 import React from 'react'
 import { Star, Plus, User } from 'lucide-react'
 import {useRouter} from 'next/navigation'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
+// import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { Wallet, ConnectWallet, WalletDropdown, WalletDropdownDisconnect } from '@coinbase/onchainkit/wallet';
+import { Name, Identity, Avatar, Address, EthBalance } from '@coinbase/onchainkit/identity'
 
 export default function Header() {
     const router = useRouter()
@@ -17,7 +19,21 @@ export default function Header() {
               </div>
               <h1 className="text-xl font-bold text-gray-900">Fiidbak</h1>
                 {/* Wallet Connect and Dropdown */}
-                <ConnectButton />
+                {/* <ConnectButton /> */}
+                <Wallet className="z-10">
+                <ConnectWallet>
+                  <Name className="text-inherit" />
+                </ConnectWallet>
+                <WalletDropdown>
+                  <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
+                    <Avatar />
+                    <Name />
+                    <Address />
+                    <EthBalance />
+                  </Identity>
+                  <WalletDropdownDisconnect />
+                </WalletDropdown>
+              </Wallet>
             </div>
             {/* Actions */}
             <div className="flex flex-col xs:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
