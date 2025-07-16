@@ -4,9 +4,12 @@ import { Upload, Link, Image, ArrowLeft, Check, AlertCircle } from 'lucide-react
 import { useRouter } from 'next/navigation';
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
 import { parseEther } from 'viem';
-import { CustomConnectButton } from '../components/ConnectButton';
+// import { CustomConnectButton } from '../components/ConnectButton';
 import { toast } from 'sonner';
 import { abi } from '../utils/abi';
+import { getUploadedFile, uploadFileToPinata } from '../utils/pinata';
+import { Wallet, ConnectWallet, WalletDropdown, WalletDropdownDisconnect } from '@coinbase/onchainkit/wallet';
+import { Name, Identity, Avatar, Address, EthBalance } from '@coinbase/onchainkit/identity';
 
 const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
 
@@ -111,14 +114,13 @@ export default function UploadProduct() {
     }
   };
 
-  // Simulate image upload to get a URL (replace with your actual upload logic)
   const uploadImageAndGetUrl = async (): Promise<string> => {
-    // TODO: Replace with actual upload logic (e.g., upload to IPFS, S3, etc.)
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(filePreview || '');
-      }, 1000);
-    });
+    if (!file) return '';
+     const cid = await uploadFileToPinata(file);
+     if (!cid) throw new Error('Image upload failed');
+     const url = await getUploadedFile(cid);
+     if (!url) throw new Error('Image upload failed');
+     return url;
   };
 
   // Handle success/error with useEffect
@@ -222,7 +224,23 @@ export default function UploadProduct() {
         <div className="bg-white rounded-3xl p-8 shadow-xl max-w-md w-full text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Connect Your Wallet</h2>
           <p className="text-gray-600 mb-6">Please connect your wallet to upload a product.</p>
-          <CustomConnectButton />
+          <div className="flex items-center">
+                <Wallet>
+                  <ConnectWallet className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200">
+                    <Avatar className="h-6 w-6" />
+                    <Name className="text-inherit font-medium" />
+                  </ConnectWallet>
+                  <WalletDropdown>
+                    <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
+                      <Avatar />
+                      <Name />
+                      <Address />
+                      <EthBalance />
+                    </Identity>
+                    <WalletDropdownDisconnect />
+                  </WalletDropdown>
+                </Wallet>
+              </div>
         </div>
       </div>
     );
@@ -245,7 +263,7 @@ export default function UploadProduct() {
             )}
             <button
               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 w-full"
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/products')}
             >
               View Project
             </button>
@@ -468,7 +486,7 @@ export default function UploadProduct() {
                   <p className="text-blue-700 text-sm mt-1">
                     Hash: {hash.slice(0, 10)}...{hash.slice(-8)}
                   </p>
-                  <p className="text-blue-700 text-sm mt-1 underline" onClick={() => router.push("products")}>
+                  <p className="text-blue-700 text-sm mt-1 underline cursor-pointer" onClick={() => router.push("products")}>
                     See All Products
                   </p>
                   {isConfirming && (

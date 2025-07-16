@@ -39,6 +39,7 @@ type ProductProcessed = Omit<Product, "id" | "createdAt" | "totalRating" | "rati
   category: string;
   tags: string[];
   views: number;
+  imageUrl: string;
 };
 
 const AllProducts = () => {
@@ -82,9 +83,10 @@ const AllProducts = () => {
         createdAt: Number(product.createdAt) * 1000, // Convert to milliseconds
         totalRating: Number(product.totalRating),
         ratingCount: Number(product.ratingCount),
-        category: "DeFi", // Default category
+        category: "DeFi",
         tags: ["blockchain"],
         views: Math.floor(Math.random() * 2000) + 100, // Mock views for now
+        imageUrl: product.imageUrl,
       }));
 
       setFilteredProducts(processedProducts);
@@ -115,6 +117,7 @@ const AllProducts = () => {
       category: "DeFi", // Default for now
       tags: ["blockchain"],
       views: Math.floor(Math.random() * 2000) + 100,
+      imageUrl: product.imageUrl
     }));
 
     // Search filter
