@@ -10,8 +10,9 @@ export const config = createConfig({
       preference: 'all', // This allows both mobile app and browser extension
     }),
     metaMask(),
+    farcasterFrame(),
     walletConnect({
-      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
+      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '',
     }),
   ],
   transports: {
@@ -21,6 +22,10 @@ export const config = createConfig({
   ssr: true,
 });
 
+
+function farcasterFrame(): any {
+  throw new Error('Function not implemented.');
+}
 // import '@rainbow-me/rainbowkit/styles.css';
 // import { connectorsForWallets } from '@rainbow-me/rainbowkit';
 // import { createConfig, http } from 'wagmi';
