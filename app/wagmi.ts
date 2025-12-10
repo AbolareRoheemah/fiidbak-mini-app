@@ -23,7 +23,7 @@ export const config = createConfig({
 });
 
 
-function farcasterFrame(): any {
+function farcasterFrame(): never {
   throw new Error('Function not implemented.');
 }
 // import '@rainbow-me/rainbowkit/styles.css';
